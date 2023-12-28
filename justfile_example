@@ -12,15 +12,9 @@ auth:
 
 deploy:
     docker build -t {{image_name}} . --platform=linux/x86_64
-    docker tag {{image_name}} {{repo_uri}}:test2
+    docker tag {{image_name}} {{repo_uri}}
     docker push {{repo_uri}}
     serverless deploy
 
-query query n="16":
-    @curl -s -X POST {{endpoint_uri}} -d '{"body": "{\"query\": \"{{query}}\", \"n\": {{n}}}"}'
-
-query_json:
+query:
     @curl -s -X POST {{endpoint_uri}} -H "Content-Type: application/json" -d @event.json
-
-privacypolicies query n="16":
-    @just query "{{query}}" "{{n}}" #| jq -r .privacypolicies[].symbol | tr '\n' ' '

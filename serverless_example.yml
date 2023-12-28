@@ -1,4 +1,4 @@
-org: elucherini
+org: privacy-policies
 app: semantic-search
 service: semantic-search
 frameworkVersion: '3'
@@ -13,7 +13,7 @@ provider:
 
 functions:
   query:
-    image: <repo>@<digest>
+    image: <repoUri>@<digest>
     url: true
     events:
       - httpApi:

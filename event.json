@@ -1,0 +1,16 @@
+{
+  "messageId": "xxx",
+  "receiptHandle": "xxx",
+  "body": "{\"query\": \"usenix\"}",
+  "attributes": {
+    "ApproximateReceiveCount": "1",
+    "SentTimestamp": "1545082649183",
+    "SenderId": "xxx",
+    "ApproximateFirstReceiveTimestamp": "1545082649185"
+  },
+  "messageAttributes": {},
+  "md5OfBody": "xxx",
+  "eventSource": "aws:sqs",
+  "eventSourceARN": "arn:aws:sqs:<region>:xxx:my-queue",
+  "awsRegion": "xxx"
+}

@@ -1,101 +1,86 @@
-<!--
-title: 'AWS Simple HTTP Endpoint example in Python'
-description: 'This template demonstrates how to make a simple HTTP API with Python running on AWS Lambda and API Gateway using the Serverless Framework.'
-layout: Doc
-framework: v3
-platform: AWS
-language: python
-authorLink: 'https://github.com/serverless'
-authorName: 'Serverless, inc.'
-authorAvatar: 'https://avatars1.githubusercontent.com/u/13742415?s=200&v=4'
--->
+# PoC: semantic search for privacy policies
 
-# Serverless Framework Python HTTP API on AWS
+This project is based on the [Princeton-Leuven Privacy Policy dataset](https://privacypolicies.cs.princeton.edu/), a 
+dataset of over a million privacy policies spanning 20+ years.
 
-This template demonstrates how to make a simple HTTP API with Python running on AWS Lambda and API Gateway using the Serverless Framework.
+An efficient search engine would help practitioners and policymakers quickly answer questions about privacy policies
+like: "What kind of information did Facebook collect in 2010?", "When did Google include GDPR compliance?"
 
-This template does not include any kind of persistence (database). For more advanced examples, check out the [serverless/examples repository](https://github.com/serverless/examples/)  which includes DynamoDB, Mongo, Fauna and other examples.
+This repo demonstrates **semantic search**, a step towards RAG (Retrieval Augment Generation) to support answering 
+natural language questions from the privacy policy dataset.
+
+#### Acknowledgements
+
+The code and deployment setup is heavily inspired by [this article](https://aseifert.com/p/serverless-sentence-transformer/).
+
+## Installation
+The code can be installed with [poetry](https://python-poetry.org/docs/):
+
+```bash
+git clone git@github.com:privacy-policy-search/semantic-search-poc.git
+cd semantic-search-poc
+poetry install --all-extras
+```
 
 ## Usage
 
+For demonstration purposes, this repo uses HuggingFace's 
+[SentenceTransformers](https://huggingface.co/sentence-transformers).
+
+It also includes a small sample of the privacy policies. Request access to the 
+[full dataset](https://privacypolicies.cs.princeton.edu/) to unlock the full functionality.
+
+### Local
+
+Run locally with:
+
+```
+poetry run python save_model.py
+poetry run python handler.py
+```
+
 ### Deployment
 
-```
-$ serverless deploy
-```
+All configuration files are provided for deployment on AWS Lambda and ECR with the 
+[serverless framework](https://www.serverless.com/framework/docs/getting-started).
 
-After deploying, you should see output similar to:
+**Create ECR Repo**
 
-```bash
-Deploying aws-python-http-api-project to stage dev (us-east-1)
-
-✔ Service deployed to stack aws-python-http-api-project-dev (140s)
-
-endpoint: GET - https://xxxxxxxxxx.execute-api.us-east-1.amazonaws.com/
-functions:
-  hello: aws-python-http-api-project-dev-hello (2.3 kB)
-```
-
-_Note_: In current form, after deployment, your API is public and can be invoked by anyone. For production deployments, you might want to configure an authorizer. For details on how to do that, refer to [http event docs](https://www.serverless.com/framework/docs/providers/aws/events/apigateway/).
-
-### Invocation
-
-After successful deployment, you can call the created application via HTTP:
+You must have an AWS account, the AWS CLI installed (e.g., `brew install awscli`), and be 
+[authenticated](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-authentication.html).
 
 ```bash
-curl https://xxxxxxx.execute-api.us-east-1.amazonaws.com/
+aws ecr create-repository --repository-name privacypolicyfinder-repo
 ```
 
-Which should result in response similar to the following (removed `input` content for brevity):
+Make note of the repository URI for the following steps.
 
-```json
-{
-  "message": "Go Serverless v3.0! Your function executed successfully!",
-  "input": {
-    ...
-  }
-}
-```
-
-### Local development
-
-You can invoke your function locally by using the following command:
+You can use the `justfile_example` provided to authenticate into the newly created ECR repository. Just fill in the 
+missing fields, rename it to `justfile` and run:
 
 ```bash
-serverless invoke local --function hello
+just auth
 ```
 
-Which should result in response similar to the following:
+**Deployment**
 
-```
-{
-  "statusCode": 200,
-  "body": "{\n  \"message\": \"Go Serverless v3.0! Your function executed successfully!\",\n  \"input\": \"\"\n}"
-}
-```
+You must follow these steps at least once before running the `deploy` recipe:
+1. Run `poetry run python save_model.py` if you haven't yet.
+2. Build the docker image and then push it
+```bash
+docker build -t privacypolicyfinder . --platform=linux/x86_64
+docker tag privacypolicyfinder <repoUri>
+docker push <repoUri>
+````
+3. Make note of the digest for the next step.
+3. Rename `serverless_example.yml` to `serverless.yml` and fill in image in this format: <repoUri>@<digest>
+4. Run `serverless deploy`
 
-Alternatively, it is also possible to emulate API Gateway and Lambda locally by using `serverless-offline` plugin. In order to do that, execute the following command:
+**Query**
+
+You can send in a new event following the AWS Lambda example format. You can use and edit the provided `event.json` 
+and run:
 
 ```bash
-serverless plugin install -n serverless-offline
+just query
 ```
-
-It will add the `serverless-offline` plugin to `devDependencies` in `package.json` file as well as will add it to `plugins` in `serverless.yml`.
-
-After installation, you can start local emulation with:
-
-```
-serverless offline
-```
-
-To learn more about the capabilities of `serverless-offline`, please refer to its [GitHub repository](https://github.com/dherault/serverless-offline).
-
-### Bundling dependencies
-
-In case you would like to include 3rd party dependencies, you will need to use a plugin called `serverless-python-requirements`. You can set it up by running the following command:
-
-```bash
-serverless plugin install -n serverless-python-requirements
-```
-
-Running the above will automatically add `serverless-python-requirements` to `plugins` section in your `serverless.yml` file and add it as a `devDependency` to `package.json` file. The `package.json` file will be automatically created if it doesn't exist beforehand. Now you will be able to add your dependencies to `requirements.txt` file (`Pipfile` and `pyproject.toml` is also supported but requires additional configuration) and they will be automatically injected to Lambda package during build process. For more details about the plugin's configuration, please refer to [official documentation](https://github.com/UnitedIncome/serverless-python-requirements).
