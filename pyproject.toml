@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "semantic-search"
+version = "0.1.0"
+description = ""
+authors = ["Eli Lucherini <eleluche@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+torch = [
+    {platform = "linux", url = "http://download.pytorch.org/whl/cpu/torch-2.1.2%2Bcpu-cp311-cp311-linux_x86_64.whl"},
+    {platform = "darwin", url = "http://download.pytorch.org/whl/cpu/torch-2.1.2-cp311-none-macosx_10_9_x86_64.whl"}
+]
+python = "^3.11"
+async-timeout = "^4.0.3"
+sentence-transformers = "^2.2.2"
+numpy = "^1.26.2"
+pathlib = "^1.0.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

@@ -1,0 +1,21 @@
+org: elucherini
+app: semantic-search
+service: semantic-search
+frameworkVersion: '3'
+useDotenv: true
+
+provider:
+  name: aws
+  runtime: python3.11
+  versionFunctions: false
+  region: <region>
+  timeout: 31
+
+functions:
+  query:
+    image: <repo>@<digest>
+    url: true
+    events:
+      - httpApi:
+          path: /
+          method: post

@@ -1,0 +1,26 @@
+region := <region>
+endpoint_uri := <endpoint_uri>
+repo_uri := <repo_uri>
+image_name := "privacypolicyfinder"
+
+default:
+    @just --list
+
+auth:
+    account_id=$(aws sts get-caller-identity --query Account --output text) \
+    && aws ecr get-login-password | docker login --username AWS --password-stdin ${account_id}.dkr.ecr.{{region}}.amazonaws.com
+
+deploy:
+    docker build -t {{image_name}} . --platform=linux/x86_64
+    docker tag {{image_name}} {{repo_uri}}:test2
+    docker push {{repo_uri}}
+    serverless deploy
+
+query query n="16":
+    @curl -s -X POST {{endpoint_uri}} -d '{"body": "{\"query\": \"{{query}}\", \"n\": {{n}}}"}'
+
+query_json:
+    @curl -s -X POST {{endpoint_uri}} -H "Content-Type: application/json" -d @event.json
+
+privacypolicies query n="16":
+    @just query "{{query}}" "{{n}}" #| jq -r .privacypolicies[].symbol | tr '\n' ' '
